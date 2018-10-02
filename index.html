@@ -22,128 +22,217 @@
      */
     const lambdaList1 = function() {
         const empty_list = Symbol('empty_list');
-        const not = (x) => (x) ? false : true;
-        const and = (a, b) => (a) ? (b) ? true : false : false;
-        const or = (a, b) => (a) ? true : (b) ? true : false;
-        const xor = (a, b) => and(or(a, b), not(and(a, b)));
         return {
             make: () => empty_list,
             prepend: (element, list) => (cmd) => (cmd === 'head') ? element : list,
             head: (list) => list('head'),
             tail: (list) => list('tail'),
             is_empty: (list) => list === empty_list,
-            map: function(func, list) { 
-                if (this.is_empty(list)) {
-                    return empty_list;
-                } else {
-                    return this.prepend(
-                        func(this.head(list)), 
-                        this.map(
-                            func, 
-                            this.tail(list)
-                        )
-                    );
-                }
-            },
-            filter: function(func, list) {
-                if (this.is_empty(list)) {
-                    return empty_list;
-                } else if (func(this.head(list))) {
-                    return this.prepend(
-                        this.head(list),
-                        this.filter(
-                            func, 
-                            this.tail(list)
-                        )
-                    );
-                } else {
-                    return this.filter(
-                        func, 
-                        this.tail(list)
-                    );
-                }
-            },
-            notTest: (x) => not(x),
-            andTest: (a, b) => and(a, b),
-            orTest: (a, b) => or(a, b),
-            xorTest: (a, b) => xor(a, b),
         }
     };
-    const ll1 = lambdaList1();
-    const e = ll1.make();
-    console.log(ll1.is_empty(e)); // true
-    console.log("^ true");
-    const names = ll1.prepend(
-        "Alice", 
-        ll1.prepend(
-            "Bob", 
-            ll1.prepend(
-                "Candice", 
-                e
-            )
-        )
-    );
-    console.log(ll1.is_empty(names)); // false
-    console.log("^ false");
-    console.log(ll1.head(names)); // "Alice"
-    console.log("^ 'Alice'");
-    console.log(ll1.tail(names)); // Closure for ["Bob", "Candice"]
-    console.log("^ Closure");
-    console.log(ll1.head(ll1.tail(names))); // "Bob"
-    console.log("^ 'Bob'");
+    /**
+     * Version 2 drops the need for is checks and string literals (or
+     * Symbols, as my version 1 used in place of the null representing
+     * an empty list in the source article). This one gets a little
+     * brain melty if we don't have our sea legs for higher order
+     * functions. After years of dabbling in this stuff I'm still not
+     * sure I've got my sea legs, so I will attempt to briefly explain
+     * if only for the benefit of my future self.
+     *
+     * Each item of our list can be thought of as consisting of 3
+     * fields: an element currently at the head of our list, the
+     * tail of the current list (which is itself a list), and a boolean
+     * representing if we have reached the end of our list.
+     *
+     * Only the empty list will have TRUE for that 3rd field. And the
+     * other 2 fields do not matter for the empty list as we should
+     * never actually access them. We are using `undefined` here but
+     * we could have used null or a symbol or whatever reasonable value
+     * we want. As we build a list with calls to prepend() we always
+     * set the 3rd field to FALSE.
+     *
+     * Calls to prepend() also wrap the element being appended and the
+     * list being appended to in a closure. This closure expects to be given a
+     * selector function to access one of our three fields. So now our calls to
+     * head(), tail(), and is_empty() can invoke the closure and pass along a
+     * selector function to access the first, second, or third field as needed.
+     * Here we are using anonymous arrow functions but the implementation
+     * details can safely be ignored by the rest of our code.
+     */
+    const lambdaList2 = function() {
+        const empty_list = (sel) => sel(undefined, undefined, true);
+        return {
+            make: () => empty_list,
+            prepend: (element, list) => (sel) => sel(element, list, false),
+            head: (list) => list((h, t, e) => h),
+            tail: (list) => list((h, t, e) => t),
+            is_empty: (list) => list((h, t, e) => e),
+        }
+    };
+
+    const listDecorator = function(lambdaList) {
+        const not = (x) => (x) ? false : true;
+        const and = (a, b) => (a) ? (b) ? true : false : false;
+        const or = (a, b) => (a) ? true : (b) ? true : false;
+        const xor = (a, b) => and(or(a, b), not(and(a, b)));
+        lambdaList.map = function(func, list) {
+            if (this.is_empty(list)) {
+                return this.make();
+            } else {
+                return this.prepend(
+                    func(this.head(list)),
+                    this.map(
+                        func, 
+                        this.tail(list)
+                    )
+                );
+            }
+        }
+        lambdaList.filter = function(func, list) {
+            if (this.is_empty(list)) {
+                return this.make();
+            } else if (func(this.head(list))) {
+                return this.prepend(
+                    this.head(list),
+                    this.filter(
+                        func,
+                        this.tail(list)
+                    )
+                );
+            } else {
+                return this.filter(
+                    func,
+                    this.tail(list)
+                );
+            }
+        }
+        lambdaList.notTest = (x) => not(x);
+        lambdaList.andTest = (a, b) => and(a, b);
+        lambdaList.orTest = (a, b) => or(a, b);
+        lambdaList.xorTest = (a, b) => xor(a, b);
+
+        return lambdaList;
+    }
 
     const square = (x) => x * x;
-    const numbers = ll1.prepend(
-        1, 
-        ll1.prepend(
-            2, 
-            ll1.prepend(
-                3, 
-                e
-            )
-        )
-    );
-    const squared_numbers = ll1.map(square, numbers);
-    console.log(ll1.head(ll1.tail(ll1.tail(squared_numbers)))); // 9
-    console.log("^ 9");
     const is_odd = (x) => x % 2 === 1;
-    const odd_numbers = ll1.filter(is_odd, numbers);
-    console.log(ll1.head(odd_numbers)); // 1
-    console.log("^ 1");
-    console.log(ll1.head(ll1.tail(odd_numbers))); // 3
-    console.log("^ 3");
+    const listTest = function(testList) {
+        const e = testList.make();
+        console.log('Test empty list and is_empty() method');
+        console.log(testList.is_empty(e)); // true
+        console.log("^ true");
+        console.assert(testList.is_empty(e) === true);
 
-    console.log(ll1.notTest(true)); // false
-    console.log("^ false");
-    console.log(ll1.notTest(false)); // true
-    console.log("^ true");
+        console.log('Test basic list construction and item access');
+        const names = testList.prepend(
+            "Alice",
+            testList.prepend(
+                "Bob",
+                testList.prepend(
+                    "Candice",
+                    e
+                )
+            )
+        );
+        console.log(testList.is_empty(names)); // false
+        console.log("^ false");
+        console.assert(testList.is_empty(names) === false);
+        console.log(testList.head(names)); // "Alice"
+        console.log("^ 'Alice'");
+        console.assert(testList.head(names) === 'Alice');
+        console.log(testList.tail(names)); // Closure for ["Bob", "Candice"]
+        console.log("^ Closure");
+        console.log(testList.head(testList.tail(names))); // "Bob"
+        console.log("^ 'Bob'");
+        console.assert(testList.head(testList.tail(names)) === 'Bob');
 
-    console.log(ll1.andTest(true, true)); // true
-    console.log("^ true");
-    console.log(ll1.andTest(true, false)); // false
-    console.log("^ false");
-    console.log(ll1.andTest(false, true)); // false
-    console.log("^ false");
-    console.log(ll1.andTest(false, false)); // false
-    console.log("^ false");
+        console.log('Test map() method')
+        const numbers = testList.prepend(
+            1,
+            testList.prepend(
+                2,
+                testList.prepend(
+                    3,
+                    e
+                )
+            )
+        );
+        const squared_numbers = testList.map(square, numbers);
+        console.log(testList.head(testList.tail(testList.tail(squared_numbers)))); // 9
+        console.log("^ 9");
+        console.assert(testList.head(testList.tail(testList.tail(squared_numbers))) === 9);
 
-    console.log(ll1.orTest(true, true)); // true
-    console.log("^ true");
-    console.log(ll1.orTest(true, false)); // true
-    console.log("^ true");
-    console.log(ll1.orTest(false, true)); // true
-    console.log("^ true");
-    console.log(ll1.orTest(false, false)); // false
-    console.log("^ false");
+        console.log('Test filter() method');
+        const odd_numbers = testList.filter(is_odd, numbers);
+        console.log(testList.head(odd_numbers)); // 1
+        console.log("^ 1");
+        console.assert(testList.head(odd_numbers) === 1);
+        console.log(testList.head(testList.tail(odd_numbers))); // 3
+        console.log("^ 3");
+        console.assert(testList.head(testList.tail(odd_numbers)) === 3);
 
-    console.log(ll1.xorTest(true, true)); // false
-    console.log("^ false");
-    console.log(ll1.xorTest(true, false)); // true
-    console.log("^ true");
-    console.log(ll1.xorTest(false, true)); // true
-    console.log("^ true");
-    console.log(ll1.xorTest(false, false)); // false
-    console.log("^ false");
+        console.log('Test helper methods');
+        console.log(testList.notTest(true)); // false
+        console.log("^ false");
+        console.assert(testList.notTest(true) === false);
 
+        console.log(testList.notTest(false)); // true
+        console.log("^ true");
+        console.assert(testList.notTest(false) === true);
+
+        console.log(testList.andTest(true, true)); // true
+        console.log("^ true");
+        console.assert(testList.andTest(true, true) === true);
+
+        console.log(testList.andTest(true, false)); // false
+        console.log("^ false");
+        console.assert(testList.andTest(true, false) === false);
+
+        console.log(testList.andTest(false, true)); // false
+        console.log("^ false");
+        console.assert(testList.andTest(false, true) === false);
+
+        console.log(testList.andTest(false, false)); // false
+        console.log("^ false");
+        console.assert(testList.andTest(false, false) === false);
+
+        console.log(testList.orTest(true, true)); // true
+        console.log("^ true");
+        console.assert(testList.orTest(true, true) === true);
+
+        console.log(testList.orTest(true, false)); // true
+        console.log("^ true");
+        console.assert(testList.orTest(true, false) === true);
+
+        console.log(testList.orTest(false, true)); // true
+        console.log("^ true");
+        console.assert(testList.orTest(false, true) === true);
+
+        console.log(testList.orTest(false, false)); // false
+        console.log("^ false");
+        console.assert(testList.orTest(false, false) === false);
+
+
+        console.log(testList.xorTest(true, true)); // false
+        console.log("^ false");
+        console.assert(testList.xorTest(true, true) === false);
+
+        console.log(testList.xorTest(true, false)); // true
+        console.log("^ true");
+        console.assert(testList.xorTest(true, false) === true);
+
+        console.log(testList.xorTest(false, true)); // true
+        console.log("^ true");
+        console.assert(testList.xorTest(false, true) === true);
+
+        console.log(testList.xorTest(false, false)); // false
+        console.log("^ false");
+        console.assert(testList.xorTest(false, false) === false);
+    }
+
+    const ll1 = listDecorator(lambdaList1());
+    listTest(ll1);
+    const ll2 = listDecorator(lambdaList2());
+    listTest(ll2);
   </script>
 </html>
