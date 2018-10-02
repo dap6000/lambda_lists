@@ -114,6 +114,86 @@
         return lambdaList;
     }
 
+    const churchNumbers = function(lambdaList) {
+        const zero = lambdaList.make();
+        const one = lambdaList.prepend(zero, zero);
+        const two = lambdaList.prepend(zero, one);
+        lambdaList.is_zero = function(n) {
+            return this.is_empty(n);
+        }
+        lambdaList.inc = function(n) {
+            return this.prepend(zero, n);
+        }
+        lambdaList.dec = function(n) {
+            return this.tail(n);
+        }
+        lambdaList.add = function(a, b) {
+            (this.is_zero(b))? a : this.add(this.inc(a), this.dec(b));
+        }
+        lambdaList.sub = function(a, b) {
+            (this.is_zero(b))? a : this.add(this.dec(a), this.dec(b));
+        }
+        lambdaList.mul = function(a, b) {
+            (this.is_zero(b))? zero : this.add(a, this.mul(a, this.dec(b)));
+        }
+        lambdaList.pow = function(a, b) {
+            (this.is_zero(b))? one : this.mul(a, this.pow(a, this.dec(b)));
+        }
+        lambdaList.is_equal = function(a, b) {
+            if (this.andTest(this.is_zero(a), this.is_zero(b))) {
+                return true;
+            } else if (this.orTest(this.is_zero(a), this.is_zero(b))) {
+                return false;
+            } else {
+                return this.is_equal(this.dec(a), this.dec(b));
+            }
+        }
+        lambdaList.lt = function(a, b) {
+            if (this.andTest(this.is_zero(a), this.is_zero(b))) {
+                return false;
+            } else if (this.is_zero(a)) {
+                return true;
+            } else if (this.is_zero(b)) {
+                return false;
+            } else {
+                return this.lt(this.dec(a), this.dec(b));
+            }
+        }
+        lambdaList.gt = function(a, b) {
+            return this.lt(b, a);
+        }
+        lambdaList.div = function(a, b) {
+            this.lt(a, b) ? zero : this.inc(this.div(this.sub(a, b), b));
+        }
+        lambdaList.rem = function(a, b) {
+            this.lt(a, b) ? a : this.rem(this.sub(a, b), b);
+        }
+        lambdaList.nth = function(list, n) {
+            this.is_zero(n) ? this.head(list) : this.nth(this.tail(list, this.dec(n)));
+        }
+        lambdaList.drop = function(list, n) {
+            this.is_zero(n) ? list : this.drop(this.tail(list), this.dec(n));
+        }
+        lambdaList.take = function(list, n) {
+            this.is_zero(n) ? zero : this.prepend(this.head(list), this.take(this.tail(list), this.dec(n)));
+        }
+        lambdaList.slice = function(list, start, end) {
+            return this.take(this.drop(list, start), this.sub(end, start));
+        }
+        lambdaList.length = function(list) {
+            this.is_zero(list) ? zero : this.inc(this.length(this.tail(list)));
+        }
+        lambdaList.toInt = function(list) {
+            this.is_zero(list) ? 0 : 1 + this.toInt(this.tail(list));
+        }
+        lambdaList.fromInt = function(n) {
+            const num = parseInt(n, 10);
+            if (num === 0 || num < 0 || Number.isNaN(num)) ? zero : this.prepend(zero, this.fromInt(n - 1));
+        }
+
+        return lambdaList;
+    }
+
     const square = (x) => x * x;
     const is_odd = (x) => x % 2 === 1;
     const listTest = function(testList) {
@@ -234,5 +314,7 @@
     listTest(ll1);
     const ll2 = listDecorator(lambdaList2());
     listTest(ll2);
+    const church = churchNumbers(ll2);
+    
   </script>
 </html>
