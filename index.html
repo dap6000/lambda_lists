@@ -11,9 +11,139 @@
     </style>
   </head>
   <body>
-    <!-- -->
+    <p>The fun stuff is in the console.</p>
   </body>
   <script>
-    // 
+    /** 
+     * Version 1 covers the first half or so of the original article. 
+     * Wrapping everything in an object literal complicates some things
+     * but since I'm writing this in 2018 I can use stuff like arrow functions
+     * to help make up for the added verbosity in places.
+     */
+    const lambdaList1 = function() {
+        const empty_list = Symbol('empty_list');
+        const not = (x) => (x) ? false : true;
+        const and = (a, b) => (a) ? (b) ? true : false : false;
+        const or = (a, b) => (a) ? true : (b) ? true : false;
+        const xor = (a, b) => and(or(a, b), not(and(a, b)));
+        return {
+            make: () => empty_list,
+            prepend: (element, list) => (cmd) => (cmd === 'head') ? element : list,
+            head: (list) => list('head'),
+            tail: (list) => list('tail'),
+            is_empty: (list) => list === empty_list,
+            map: function(func, list) { 
+                if (this.is_empty(list)) {
+                    return empty_list;
+                } else {
+                    return this.prepend(
+                        func(this.head(list)), 
+                        this.map(
+                            func, 
+                            this.tail(list)
+                        )
+                    );
+                }
+            },
+            filter: function(func, list) {
+                if (this.is_empty(list)) {
+                    return empty_list;
+                } else if (func(this.head(list))) {
+                    return this.prepend(
+                        this.head(list),
+                        this.filter(
+                            func, 
+                            this.tail(list)
+                        )
+                    );
+                } else {
+                    return this.filter(
+                        func, 
+                        this.tail(list)
+                    );
+                }
+            },
+            notTest: (x) => not(x),
+            andTest: (a, b) => and(a, b),
+            orTest: (a, b) => or(a, b),
+            xorTest: (a, b) => xor(a, b),
+        }
+    };
+    const ll1 = lambdaList1();
+    const e = ll1.make();
+    console.log(ll1.is_empty(e)); // true
+    console.log("^ true");
+    const names = ll1.prepend(
+        "Alice", 
+        ll1.prepend(
+            "Bob", 
+            ll1.prepend(
+                "Candice", 
+                e
+            )
+        )
+    );
+    console.log(ll1.is_empty(names)); // false
+    console.log("^ false");
+    console.log(ll1.head(names)); // "Alice"
+    console.log("^ 'Alice'");
+    console.log(ll1.tail(names)); // Closure for ["Bob", "Candice"]
+    console.log("^ Closure");
+    console.log(ll1.head(ll1.tail(names))); // "Bob"
+    console.log("^ 'Bob'");
+
+    const square = (x) => x * x;
+    const numbers = ll1.prepend(
+        1, 
+        ll1.prepend(
+            2, 
+            ll1.prepend(
+                3, 
+                e
+            )
+        )
+    );
+    const squared_numbers = ll1.map(square, numbers);
+    console.log(ll1.head(ll1.tail(ll1.tail(squared_numbers)))); // 9
+    console.log("^ 9");
+    const is_odd = (x) => x % 2 === 1;
+    const odd_numbers = ll1.filter(is_odd, numbers);
+    console.log(ll1.head(odd_numbers)); // 1
+    console.log("^ 1");
+    console.log(ll1.head(ll1.tail(odd_numbers))); // 3
+    console.log("^ 3");
+
+    console.log(ll1.notTest(true)); // false
+    console.log("^ false");
+    console.log(ll1.notTest(false)); // true
+    console.log("^ true");
+
+    console.log(ll1.andTest(true, true)); // true
+    console.log("^ true");
+    console.log(ll1.andTest(true, false)); // false
+    console.log("^ false");
+    console.log(ll1.andTest(false, true)); // false
+    console.log("^ false");
+    console.log(ll1.andTest(false, false)); // false
+    console.log("^ false");
+
+    console.log(ll1.orTest(true, true)); // true
+    console.log("^ true");
+    console.log(ll1.orTest(true, false)); // true
+    console.log("^ true");
+    console.log(ll1.orTest(false, true)); // true
+    console.log("^ true");
+    console.log(ll1.orTest(false, false)); // false
+    console.log("^ false");
+
+    console.log(ll1.xorTest(true, true)); // false
+    console.log("^ false");
+    console.log(ll1.xorTest(true, false)); // true
+    console.log("^ true");
+    console.log(ll1.xorTest(false, true)); // true
+    console.log("^ true");
+    console.log(ll1.xorTest(false, false)); // false
+    console.log("^ false");
+
   </script>
 </html>
