@@ -24,7 +24,9 @@
         const empty_list = Symbol('empty_list');
         return {
             make: () => empty_list,
-            prepend: (element, list) => (cmd) => (cmd === 'head') ? element : list,
+            prepend: (element, list) => (cmd) => (cmd === 'head')
+                ? element
+                : list,
             head: (list) => list('head'),
             tail: (list) => list('tail'),
             is_empty: (list) => list === empty_list,
@@ -70,131 +72,111 @@
         }
     };
 
-    const listDecorator = function(lambdaList) {
+    const listDecorator = function(L) {
         const not = (x) => (x) ? false : true;
         const and = (a, b) => (a) ? (b) ? true : false : false;
         const or = (a, b) => (a) ? true : (b) ? true : false;
         const xor = (a, b) => and(or(a, b), not(and(a, b)));
-        lambdaList.map = function(func, list) {
-            if (this.is_empty(list)) {
-                return this.make();
+        L.map = (func, list) => {
+            if (L.is_empty(list)) {
+                return list;
             } else {
-                return this.prepend(
-                    func(this.head(list)),
-                    this.map(
+                return L.prepend(
+                    func(L.head(list)),
+                    L.map(
                         func, 
-                        this.tail(list)
+                        L.tail(list)
                     )
                 );
             }
         }
-        lambdaList.filter = function(func, list) {
-            if (this.is_empty(list)) {
-                return this.make();
-            } else if (func(this.head(list))) {
-                return this.prepend(
-                    this.head(list),
-                    this.filter(
+        L.filter = (func, list) => {
+            if (L.is_empty(list)) {
+                return list;
+            } else if (func(L.head(list))) {
+                return L.prepend(
+                    L.head(list),
+                    L.filter(
                         func,
-                        this.tail(list)
+                        L.tail(list)
                     )
                 );
             } else {
-                return this.filter(
+                return L.filter(
                     func,
-                    this.tail(list)
+                    L.tail(list)
                 );
             }
         }
-        lambdaList.notTest = (x) => not(x);
-        lambdaList.andTest = (a, b) => and(a, b);
-        lambdaList.orTest = (a, b) => or(a, b);
-        lambdaList.xorTest = (a, b) => xor(a, b);
+        L.notTest = (x) => not(x);
+        L.andTest = (a, b) => and(a, b);
+        L.orTest = (a, b) => or(a, b);
+        L.xorTest = (a, b) => xor(a, b);
 
-        return lambdaList;
+        return L;
     }
 
-    const churchNumbers = function(lambdaList) {
-        const zero = lambdaList.make();
-        const one = lambdaList.prepend(zero, zero);
-        const two = lambdaList.prepend(zero, one);
-        lambdaList.is_zero = function(n) {
-            return this.is_empty(n);
-        }
-        lambdaList.inc = function(n) {
-            return this.prepend(zero, n);
-        }
-        lambdaList.dec = function(n) {
-            return this.is_zero(n) ? zero : this.tail(n);
-        }
-        lambdaList.add = function(a, b) {
-            return (this.is_zero(b))? a : this.add(this.inc(a), this.dec(b));
-        }
-        lambdaList.sub = function(a, b) {
-            return (this.is_zero(b))? a : this.sub(this.dec(a), this.dec(b));
-        }
-        lambdaList.mul = function(a, b) {
-            return (this.is_zero(b))? zero : this.add(a, this.mul(a, this.dec(b)));
-        }
-        lambdaList.pow = function(a, b) {
-            return (this.is_zero(b))? one : this.mul(a, this.pow(a, this.dec(b)));
-        }
-        lambdaList.is_equal = function(a, b) {
-            if (this.andTest(this.is_zero(a), this.is_zero(b))) {
+    const churchNumbers = function(L) {
+        const zero = L.make();
+        const one = L.prepend(zero, zero);
+        const two = L.prepend(zero, one);
+        L.is_zero = (n) => L.is_empty(n);
+        L.inc = (n) => L.prepend(zero, n);
+        L.dec = (n) => L.is_zero(n) ? zero : L.tail(n);
+        L.add = (a, b) => (L.is_zero(b))? a : L.add(L.inc(a), L.dec(b));
+        L.sub = (a, b) => (L.is_zero(b))? a : L.sub(L.dec(a), L.dec(b));
+        L.mul = (a, b) => (L.is_zero(b))? zero : L.add(a, L.mul(a, L.dec(b)));
+        L.pow = (a, b) => (L.is_zero(b))? one : L.mul(a, L.pow(a, L.dec(b)));
+        L.is_equal = (a, b) => {
+            if (L.andTest(L.is_zero(a), L.is_zero(b))) {
                 return true;
-            } else if (this.orTest(this.is_zero(a), this.is_zero(b))) {
+            } else if (L.orTest(L.is_zero(a), L.is_zero(b))) {
                 return false;
             } else {
-                return this.is_equal(this.dec(a), this.dec(b));
+                return L.is_equal(L.dec(a), L.dec(b));
             }
         }
-        lambdaList.lt = function(a, b) {
-            if (this.andTest(this.is_zero(a), this.is_zero(b))) {
+        L.lt = (a, b) => {
+            if (L.andTest(L.is_zero(a), L.is_zero(b))) {
                 return false;
-            } else if (this.is_zero(a)) {
+            } else if (L.is_zero(a)) {
                 return true;
-            } else if (this.is_zero(b)) {
+            } else if (L.is_zero(b)) {
                 return false;
             } else {
-                return this.lt(this.dec(a), this.dec(b));
+                return L.lt(L.dec(a), L.dec(b));
             }
         }
-        lambdaList.gt = function(a, b) {
-            return this.lt(b, a);
-        }
-        lambdaList.div = function(a, b) {
-            return this.lt(a, b) ? zero : this.inc(this.div(this.sub(a, b), b));
-        }
-        lambdaList.rem = function(a, b) {
-            return this.lt(a, b) ? a : this.rem(this.sub(a, b), b);
-        }
-        lambdaList.toInt = function(list) {
-            return this.is_zero(list) ? 0 : 1 + this.toInt(this.tail(list));
-        }
-        lambdaList.fromInt = function(n) {
-            const num = parseInt(n, 10);
-            return (num === 0 || num < 0 || Number.isNaN(num)) ? zero : this.prepend(zero, this.fromInt(n - 1));
-        }
+        L.gt = (a, b) => L.lt(b, a);
+        L.div = (a, b) => L.lt(a, b) ? zero : L.inc(L.div(L.sub(a, b), b));
+        L.rem = (a, b) => L.lt(a, b) ? a : L.rem(L.sub(a, b), b);
+        L.toInt = (list) => L.is_zero(list) ? 0 : 1 + L.toInt(L.tail(list));
+        L.fromInt = (n) => (parseInt(n, 10) <= 0 || Number.isNaN(n))
+            ? zero
+            : L.prepend(zero, L.fromInt(n - 1));
 
-        return lambdaList;
+        return L;
     }
 
-    const arrayDecorator = function(churchList) {
-        churchList.nth = function(list, n) {
-            return this.is_zero(n) ? this.head(list) : this.nth(this.tail(list, this.dec(n)));
-        }
-        churchList.drop = function(list, n) {
-            return this.is_zero(n) ? list : this.drop(this.tail(list), this.dec(n));
-        }
-        churchList.take = function(list, n) {
-            return this.is_zero(n) ? zero : this.prepend(this.head(list), this.take(this.tail(list), this.dec(n)));
-        }
-        churchList.slice = function(list, start, end) {
-            return this.take(this.drop(list, start), this.sub(end, start));
-        }
-        churchList.length = function(list) {
-            return this.is_zero(list) ? zero : this.inc(this.length(this.tail(list)));
-        }
+     const arrayDecorator = function(L) {
+        L.nth = (list, n) =>
+            L.is_zero(n)
+                ? L.head(list)
+                : L.nth(L.tail(list, L.dec(n)));
+        L.drop = (list, n)  =>
+            L.is_zero(n)
+                ? list
+                : L.drop(L.tail(list), L.dec(n));
+        L.take = (list, n) =>
+            L.is_zero(n)
+                ? n
+                : L.prepend(L.head(list), L.take(L.tail(list), L.dec(n)));
+        L.slice = (list, start, end) =>
+            L.take(L.drop(list, start), L.sub(end, start));
+        L.length = (list) =>
+            L.is_zero(list)
+                ? list
+                : L.inc(L.length(L.tail(list)));
     }
 
     const square = (x) => x * x;
