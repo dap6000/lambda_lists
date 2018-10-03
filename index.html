@@ -125,13 +125,13 @@
             return this.prepend(zero, n);
         }
         lambdaList.dec = function(n) {
-            return this.tail(n);
+            return this.is_zero(n) ? zero : this.tail(n);
         }
         lambdaList.add = function(a, b) {
             return (this.is_zero(b))? a : this.add(this.inc(a), this.dec(b));
         }
         lambdaList.sub = function(a, b) {
-            return (this.is_zero(b))? a : this.add(this.dec(a), this.dec(b));
+            return (this.is_zero(b))? a : this.sub(this.dec(a), this.dec(b));
         }
         lambdaList.mul = function(a, b) {
             return (this.is_zero(b))? zero : this.add(a, this.mul(a, this.dec(b)));
@@ -168,21 +168,6 @@
         lambdaList.rem = function(a, b) {
             return this.lt(a, b) ? a : this.rem(this.sub(a, b), b);
         }
-        lambdaList.nth = function(list, n) {
-            return this.is_zero(n) ? this.head(list) : this.nth(this.tail(list, this.dec(n)));
-        }
-        lambdaList.drop = function(list, n) {
-            return this.is_zero(n) ? list : this.drop(this.tail(list), this.dec(n));
-        }
-        lambdaList.take = function(list, n) {
-            return this.is_zero(n) ? zero : this.prepend(this.head(list), this.take(this.tail(list), this.dec(n)));
-        }
-        lambdaList.slice = function(list, start, end) {
-            return this.take(this.drop(list, start), this.sub(end, start));
-        }
-        lambdaList.length = function(list) {
-            return this.is_zero(list) ? zero : this.inc(this.length(this.tail(list)));
-        }
         lambdaList.toInt = function(list) {
             return this.is_zero(list) ? 0 : 1 + this.toInt(this.tail(list));
         }
@@ -192,6 +177,24 @@
         }
 
         return lambdaList;
+    }
+
+    const arrayDecorator = function(churchList) {
+        churchList.nth = function(list, n) {
+            return this.is_zero(n) ? this.head(list) : this.nth(this.tail(list, this.dec(n)));
+        }
+        churchList.drop = function(list, n) {
+            return this.is_zero(n) ? list : this.drop(this.tail(list), this.dec(n));
+        }
+        churchList.take = function(list, n) {
+            return this.is_zero(n) ? zero : this.prepend(this.head(list), this.take(this.tail(list), this.dec(n)));
+        }
+        churchList.slice = function(list, start, end) {
+            return this.take(this.drop(list, start), this.sub(end, start));
+        }
+        churchList.length = function(list) {
+            return this.is_zero(list) ? zero : this.inc(this.length(this.tail(list)));
+        }
     }
 
     const square = (x) => x * x;
@@ -292,7 +295,6 @@
         console.log("^ false");
         console.assert(testList.orTest(false, false) === false);
 
-
         console.log(testList.xorTest(true, true)); // false
         console.log("^ false");
         console.assert(testList.xorTest(true, true) === false);
@@ -310,11 +312,151 @@
         console.assert(testList.xorTest(false, false) === false);
     }
 
+    const churchTest = function(church) {
+        const zero = church.make();
+        console.log('Test is_zero()');
+        console.log({is_zero: church.is_zero(zero)});
+        console.assert(church.is_zero(zero) === true);
+
+        console.log('Test inc()');
+        const one = church.inc(zero);
+        const two = church.inc(one);
+        const three = church.inc(two);
+        const four = church.inc(three);
+        const five = church.inc(four);
+        const six = church.inc(five);
+        const seven = church.inc(six);
+        const eight = church.inc(seven);
+        const nine = church.inc(eight);
+        const ten = church.inc(nine);
+        console.log({three: church.toInt(three)});
+        console.log({zero_inc_inc_inc: church.toInt(church.inc(church.inc(church.inc(zero))))});
+        console.assert(church.toInt(three) === church.toInt(church.inc(church.inc(church.inc(zero)))));
+
+        console.log('Test dec()');
+        console.log({one: church.toInt(one)});
+        console.log({three_dec_dec: church.toInt(church.dec(church.dec(three)))});
+        console.assert(church.toInt(one) === church.toInt(church.dec(church.dec(three))));
+
+        console.log('Test add()');
+        console.log({five_toInt: church.toInt(five)});
+        console.log({two_plus_three_toInt: church.toInt(church.add(two, three))});
+        console.log({zero_plus_five_toInt: church.toInt(church.add(zero, five))});
+        console.log({five_plus_zero_toInt: church.toInt(church.add(five, zero))});
+        console.assert(church.toInt(five) === church.toInt(church.add(two, three)));
+        console.assert(church.toInt(five) === church.toInt(church.add(zero, five)));
+        console.assert(church.toInt(five) === church.toInt(church.add(five, zero)));
+        console.assert(church.toInt(church.add(zero, five)) === church.toInt(church.add(five, zero)));
+
+        console.log('Test sub()');
+        console.log({six_toInt: church.toInt(six)});
+        console.log({eight_sub_two_toInt: church.toInt(church.sub(eight, two))});
+        console.log({zero_sub_six_toInt: church.toInt(church.sub(zero, six))});
+        console.log({six_sub_zero_toInt: church.toInt(church.sub(six, zero))});
+        console.assert(church.toInt(six) === church.toInt(church.sub(eight, two)));
+        console.assert(church.toInt(six) === church.toInt(church.sub(six, zero)));
+        console.assert(church.toInt(zero) === church.toInt(church.sub(zero, six)));
+
+        console.log('Test mul()');
+        console.log({eight_toInt: church.toInt(eight)});
+        console.log({four_x_two_toInt: church.toInt(church.mul(four, two))});
+        console.log({two_x_four_toInt: church.toInt(church.mul(two, four))});
+        console.assert(church.toInt(eight) === church.toInt(church.mul(four, two)));
+        console.assert(church.toInt(eight) === church.toInt(church.mul(two, four)));
+        console.assert(church.toInt(church.mul(two, four)) === church.toInt(church.mul(four, two)));
+        console.log({eight_x_one_toInt: church.toInt(church.mul(eight, one))});
+        console.log({one_x_eight_toInt: church.toInt(church.mul(one, eight))});
+        console.assert(church.toInt(eight) === church.toInt(church.mul(eight, one)));
+        console.assert(church.toInt(eight) === church.toInt(church.mul(one, eight)));
+        console.assert(church.toInt(church.mul(eight, one)) === church.toInt(church.mul(one, eight)));
+        console.log({eight_x_zero_toInt: church.toInt(church.mul(eight, zero))});
+        console.log({zero_x_eight_toInt: church.toInt(church.mul(zero, eight))});
+        console.assert(church.toInt(zero) === church.toInt(church.mul(eight, zero)));
+        console.assert(church.toInt(zero) === church.toInt(church.mul(zero, eight)));
+        console.assert(church.toInt(church.mul(eight, zero)) === church.toInt(church.mul(zero, eight)));
+
+        console.log('Test pow()');
+        console.log({four_to_the_two_toInt: church.toInt(church.pow(four, two))});
+        console.assert(church.toInt(church.pow(four, two)) === 16);
+        console.log({three_to_the_three_toInt: church.toInt(church.pow(three, three))});
+        console.assert(church.toInt(church.pow(three, three)) === 27);
+        console.log({nine_to_the_zero_toInt: church.toInt(church.pow(nine, zero))});
+        console.assert(church.toInt(church.pow(nine, zero)) === church.toInt(one));
+        console.log({nine_to_the_one_toInt: church.toInt(church.pow(nine, one))});
+        console.assert(church.toInt(church.pow(nine, one)) === church.toInt(nine));
+        // 0^0 is technically undefined but defining it to be 1 can be acceptable
+        console.log({zero_to_the_zero_toInt: church.toInt(church.pow(zero, zero))});
+        console.assert(church.toInt(church.pow(zero, zero)) === 1);
+        console.log({zero_to_the_one_toInt: church.toInt(church.pow(zero, one))});
+        console.assert(church.toInt(church.pow(zero, one)) === 0);
+
+        console.log('Test is_equal()');
+        console.log({two_to_the_three_toInt: church.toInt(church.pow(two, three))});
+        console.log({two_to_the_three_equals_eight: church.is_equal(church.pow(two, three), eight)});
+        console.assert(church.is_equal(church.pow(two, three), eight));
+        console.log({one_equals_one: church.is_equal(one, one)});
+        console.assert(church.is_equal(one, one) === true);
+        console.log({zero_equals_zero: church.is_equal(zero, zero)});
+        console.assert(church.is_equal(zero, zero) === true);
+        console.log({one_equals_zero: church.is_equal(one, zero)});
+        console.assert(church.is_equal(one, zero) === false);
+        console.log({zero_equals_one: church.is_equal(zero, one)});
+        console.assert(church.is_equal(zero, one) === false);
+
+        console.log('Test lt()');
+        console.log({three_lt_two: church.lt(three, two)});
+        console.assert(church.lt(three, two) === false);
+        console.log({three_lt_three: church.lt(three, three)});
+        console.assert(church.lt(three, three) === false);
+        console.log({three_lt_four: church.lt(three, four)});
+        console.assert(church.lt(three, four) === true);
+
+        console.log('Test gt()');
+        console.log({three_gt_two: church.gt(three, two)});
+        console.assert(church.gt(three, two) === true);
+        console.log({three_gt_three: church.gt(three, three)});
+        console.assert(church.gt(three, three) === false);
+        console.log({three_gt_four: church.gt(three, four)});
+        console.assert(church.gt(three, four) === false);
+
+        console.log('Test div()');
+        console.log({six_div_three_toInt: church.toInt(church.div(six, three))});
+        console.assert(church.is_equal(church.div(six, three), two));
+        console.log({five_div_three_toInt: church.toInt(church.div(five, three))});
+        console.assert(church.is_equal(church.div(five, three), one));
+        console.log({two_div_three_toInt: church.toInt(church.div(two, three))});
+        console.assert(church.is_equal(church.div(two, three), zero));
+
+        console.log('Test rem()');
+        console.log({six_rem_three_toInt: church.toInt(church.rem(six, three))});
+        console.assert(church.is_equal(church.rem(six, three), zero) === true);
+        console.log({seven_rem_three_toInt: church.toInt(church.rem(seven, three))});
+        console.assert(church.is_equal(church.rem(seven, three), one) === true);
+        console.log({eight_rem_three_toInt: church.toInt(church.rem(eight, three))});
+        console.assert(church.is_equal(church.rem(eight, three), two) === true);
+        console.log({nine_rem_three_toInt: church.toInt(church.rem(nine, three))});
+        console.assert(church.is_equal(church.rem(nine, three), zero) === true);
+    }
+
+    const arrayTest = function(arr) {
+        console.log('Test nth()');
+
+        console.log('Test drop()');
+
+        console.log('Test take()');
+
+        console.log('Test slice()');
+
+        console.log('Test length()');
+    }
+
     const ll1 = listDecorator(lambdaList1());
     listTest(ll1);
     const ll2 = listDecorator(lambdaList2());
     listTest(ll2);
-    const church = churchNumbers(ll2);
-    
+    const church1 = churchNumbers(ll1);
+    churchTest(church1);
+    const church2 = churchNumbers(ll2);
+    churchTest(church2);
   </script>
 </html>
