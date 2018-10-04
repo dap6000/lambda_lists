@@ -74,42 +74,30 @@
         }
     };
 
+    /**
+     * Let's add map(), filter(), and some boolean helper methods
+     */ 
     const listDecorator = function(L) {
         const not = (x) => (x) ? false : true;
         const and = (a, b) => (a) ? (b) ? true : false : false;
         const or = (a, b) => (a) ? true : (b) ? true : false;
         const xor = (a, b) => and(or(a, b), not(and(a, b)));
-        L.map = (func, list) => {
-            if (L.is_empty(list)) {
-                return list;
-            } else {
-                return L.prepend(
+        L.map = (func, list) => 
+            L.is_empty(list)
+                ? list
+                : L.prepend(
                     func(L.head(list)),
-                    L.map(
-                        func, 
-                        L.tail(list)
+                    L.map(func, L.tail(list))
+                );
+        L.filter = (func, list) => 
+            L.is_empty(list)
+                ? list
+                : func(L.head(list))
+                    ? L.prepend(
+                        L.head(list),
+                        L.filter(func, L.tail(list))
                     )
-                );
-            }
-        }
-        L.filter = (func, list) => {
-            if (L.is_empty(list)) {
-                return list;
-            } else if (func(L.head(list))) {
-                return L.prepend(
-                    L.head(list),
-                    L.filter(
-                        func,
-                        L.tail(list)
-                    )
-                );
-            } else {
-                return L.filter(
-                    func,
-                    L.tail(list)
-                );
-            }
-        }
+                    : L.filter(func, L.tail(list));
         L.notTest = (x) => not(x);
         L.andTest = (a, b) => and(a, b);
         L.orTest = (a, b) => or(a, b);
@@ -118,6 +106,20 @@
         return L;
     }
 
+    /**
+     * Nothing in the source post mentions Church Numbers or Alonzo Church but
+     * this section is all about encoding the natural numbers using only
+     * lambdas. This is not terribly practical. But it is still a powerful
+     * and cool idea. There is no Simple English version of this Wikipedia
+     * page: https://en.wikipedia.org/wiki/Church_encoding
+     * But the code in this exercise covers a _lot_ of the same territory for
+     * those of us more fluent in Javascript than in academic math-speak.
+     * It has taken me years of dabbling to be able to wrap my head around
+     * this stuff in a language I am comfortable in. I can still barely make
+     * heads or tails (accidental but shameless pun) of that Wikipedia article.
+     * If you find all this confusing, rest assured it is a legitimately odd
+     * and dense area of computer science.
+     */
     const churchNumbers = function(L) {
         const zero = L.make();
         const one = L.prepend(zero, zero);
@@ -129,15 +131,14 @@
         L.sub = (a, b) => (L.is_zero(b))? a : L.sub(L.dec(a), L.dec(b));
         L.mul = (a, b) => (L.is_zero(b))? zero : L.add(a, L.mul(a, L.dec(b)));
         L.pow = (a, b) => (L.is_zero(b))? one : L.mul(a, L.pow(a, L.dec(b)));
-        L.is_equal = (a, b) => {
-            if (L.andTest(L.is_zero(a), L.is_zero(b))) {
-                return true;
-            } else if (L.orTest(L.is_zero(a), L.is_zero(b))) {
-                return false;
-            } else {
-                return L.is_equal(L.dec(a), L.dec(b));
-            }
-        }
+        L.is_equal = (a, b) =>
+            L.andTest(L.is_zero(a), L.is_zero(b))
+                ? true
+                : L.orTest(L.is_zero(a), L.is_zero(b))
+                    ? false
+                    : L.is_equal(L.dec(a), L.dec(b));
+        // I'm not comfortable with the level of nesting of ternary statements
+        // it would take to write lt() without if/else and return statements.
         L.lt = (a, b) => {
             if (L.andTest(L.is_zero(a), L.is_zero(b))) {
                 return false;
@@ -160,7 +161,16 @@
 
         return L;
     }
-
+    /**
+     * Here we are adding list item access by index number and other array-like
+     * helper methods. Note we are still using Church numbers here, not Ints.
+     * It can also be a useful thought exercise to consider just how many calls
+     * to dec() and inc() we are spawning once we've reached this level of
+     * abstraction. And we're still comfortably within the realm of standard
+     * features of just about any language we'd care to write production code
+     * in nowadays. But we've built all this out of (nearly) nothing but
+     * lambdas.
+     */
      const arrayDecorator = function(L) {
         L.nth = (list, n) =>
             L.is_zero(n)
