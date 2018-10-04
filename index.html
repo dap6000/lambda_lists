@@ -165,7 +165,7 @@
         L.nth = (list, n) =>
             L.is_zero(n)
                 ? L.head(list)
-                : L.nth(L.tail(list, L.dec(n)));
+                : L.nth(L.tail(list), L.dec(n));
         L.drop = (list, n)  =>
             L.is_zero(n)
                 ? list
@@ -447,15 +447,95 @@
     }
 
     const arrayTest = function(arr) {
+        const e = zero = arr.make();
+        const one = arr.inc(zero);
+        const two = arr.inc(one);
+        const three = arr.inc(two);
+        const four = arr.inc(three);
+        const five = arr.inc(four);
+        const six = arr.inc(five);
+        const seven = arr.inc(six);
+        const eight = arr.inc(seven);
+        const nine = arr.inc(eight);
+        const ten = arr.inc(nine);
+        const names = arr.prepend(
+            "Ada Lovelace", // 0
+            arr.prepend(
+                "Dorothy Vaughan", // 1
+                arr.prepend(
+                    "Mary Kenneth Keller", // 2
+                    arr.prepend(
+                        "Grace Hopper", // 3
+                        arr.prepend(
+                            "Radia Perlman", // 4
+                            arr.prepend(
+                                "Margaret Hamilton", // 5
+                                arr.prepend(
+                                    "Hilary Stohs-Krause", // 6
+                                    e
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        );
         console.log('Test nth()');
+        console.log({names_zero: arr.nth(names, zero)});
+        console.assert(arr.nth(names, zero) === "Ada Lovelace");
+        console.log({names_one: arr.nth(names, one)});
+        console.assert(arr.nth(names, one) === "Dorothy Vaughan");
+        console.log({names_two: arr.nth(names, two)});
+        console.assert(arr.nth(names, two) === "Mary Kenneth Keller");
+        console.log({names_three: arr.nth(names, three)});
+        console.assert(arr.nth(names, three) === "Grace Hopper");
+        console.log({names_four: arr.nth(names, four)});
+        console.assert(arr.nth(names, four) === "Radia Perlman");
+        console.log({names_five: arr.nth(names, five)});
+        console.assert(arr.nth(names, five) === "Margaret Hamilton");
+        console.log({names_six: arr.nth(names, six)});
+        console.assert(arr.nth(names, six) === "Hilary Stohs-Krause");
+        // arr.nth(names, seven) goes out of bounds, as expected
 
         console.log('Test drop()');
+        const dropped = arr.drop(names, three);
+        console.log({dropped_zero: arr.nth(dropped, zero)});
+        console.assert(arr.nth(dropped, zero) === "Grace Hopper");
+        console.log({dropped_one: arr.nth(dropped, one)});
+        console.assert(arr.nth(dropped, one) === "Radia Perlman");
+        console.log({dropped_two: arr.nth(dropped, two)});
+        console.assert(arr.nth(dropped, two) === "Margaret Hamilton");
+        console.log({dropped_three: arr.nth(dropped, three)});
+        console.assert(arr.nth(dropped, three) === "Hilary Stohs-Krause");
+        // arr.nth(dropped, four) goes out of bounds, as expected
 
         console.log('Test take()');
+        const taken = arr.take(names, three);
+        console.log({taken_zero: arr.nth(taken, zero)});
+        console.assert(arr.nth(taken, zero) === "Ada Lovelace");
+        console.log({taken_one: arr.nth(taken, one)});
+        console.assert(arr.nth(taken, one) === "Dorothy Vaughan");
+        console.log({taken_two: arr.nth(taken, two)});
+        console.assert(arr.nth(taken, two) === "Mary Kenneth Keller");
+        // arr.nth(taken, three) goes out of bounds, as expected
 
         console.log('Test slice()');
+        const sliced = arr.slice(names, two, four);
+        console.log({sliced_zero: arr.nth(sliced, zero)});
+        console.assert(arr.nth(sliced, zero) === "Mary Kenneth Keller");
+        console.log({sliced_one: arr.nth(sliced, one)});
+        console.assert(arr.nth(sliced, one) === "Grace Hopper");
+        // arr.nth(sliced, two) goes out of bounds, as expected
 
         console.log('Test length()');
+        console.log({names_length_toInt: arr.toInt(arr.length(names))});
+        console.assert(arr.is_equal(arr.length(names), seven));
+        console.log({dropped_length_toInt: arr.toInt(arr.length(dropped))});
+        console.assert(arr.is_equal(arr.length(dropped), four));
+        console.log({taken_length_toInt: arr.toInt(arr.length(taken))});
+        console.assert(arr.is_equal(arr.length(taken), three));
+        console.log({sliced_length_toInt: arr.toInt(arr.length(sliced))});
+        console.assert(arr.is_equal(arr.length(sliced), two));
     }
 
 
@@ -467,5 +547,9 @@
     churchTest(church1);
     const church2 = churchNumbers(ll2);
     churchTest(church2);
+    const arr1 = arrayDecorator(church1);
+    arrayTest(arr1);
+    const arr2 = arrayDecorator(church2);
+    arrayTest(arr2);
   </script>
 </html>
