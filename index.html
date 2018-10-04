@@ -24,9 +24,11 @@
         const empty_list = Symbol('empty_list');
         return {
             make: () => empty_list,
-            prepend: (element, list) => (cmd) => (cmd === 'head')
-                ? element
-                : list,
+            prepend: (element, list) => 
+                (cmd) => 
+                    (cmd === 'head')
+                        ? element
+                        : list,
             head: (list) => list('head'),
             tail: (list) => list('tail'),
             is_empty: (list) => list === empty_list,
@@ -151,9 +153,10 @@
         L.div = (a, b) => L.lt(a, b) ? zero : L.inc(L.div(L.sub(a, b), b));
         L.rem = (a, b) => L.lt(a, b) ? a : L.rem(L.sub(a, b), b);
         L.toInt = (list) => L.is_zero(list) ? 0 : 1 + L.toInt(L.tail(list));
-        L.fromInt = (n) => (parseInt(n, 10) <= 0 || Number.isNaN(n))
-            ? zero
-            : L.prepend(zero, L.fromInt(n - 1));
+        L.fromInt = (n) => 
+            (parseInt(n, 10) <= 0 || Number.isNaN(n))
+                ? zero
+                : L.prepend(zero, L.fromInt(n - 1));
 
         return L;
     }
@@ -177,6 +180,29 @@
             L.is_zero(list)
                 ? list
                 : L.inc(L.length(L.tail(list)));
+ 
+        return L;
+    }
+    const extraCredit = function(L) {
+        /*
+         * `append` to add an item to the end of a list.
+         * `concat` to concatenate two lists.
+         * `min` and `max` which take two numbers and return the minimum/maximum one.
+         * `remove`, which is like filter except it only leaves the elements that return false for the predicate.
+         * `contains_number`, which checks if a specific number is inside a list of numbers.
+        */
+
+        return L;
+    }
+    const hardMode = function(L) {
+        /*
+         * Negative numbers
+         * Non-negative rational numbers
+         * Negative rational numbers
+         * Association lists
+        */
+
+        return L;
     }
 
     const square = (x) => x * x;
@@ -431,6 +457,7 @@
 
         console.log('Test length()');
     }
+
 
     const ll1 = listDecorator(lambdaList1());
     listTest(ll1);
