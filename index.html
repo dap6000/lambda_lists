@@ -196,11 +196,27 @@
     const extraCredit = function(L) {
         /*
          * `append` to add an item to the end of a list.
+         */
+        L.append = (element, list) =>
+            L.is_empty(list)
+                ? L.prepend(element, list)
+                : L.prepend(L.head(list), L.append(element, L.tail(list)));
+        /*
          * `concat` to concatenate two lists.
          * `min` and `max` which take two numbers and return the minimum/maximum one.
          * `remove`, which is like filter except it only leaves the elements that return false for the predicate.
          * `contains_number`, which checks if a specific number is inside a list of numbers.
         */
+        L.toArray = (list) =>
+            L.is_empty(list)
+                ? []
+                : [L.head(list)].concat(L.toArray(L.tail(list)));
+
+        L.fromArray = (a) =>
+            a.reduceRight(
+                (acc, cur, idx, src) => L.prepend(cur, acc),
+                L.make()
+            );
 
         return L;
     }
@@ -548,6 +564,30 @@
         console.assert(arr.is_equal(arr.length(sliced), two));
     }
 
+    const extraCreditTest = function(testList) {
+        const numbers1 = testList.prepend(
+            1,
+            testList.prepend(
+                2,
+                testList.prepend(
+                    3,
+                    testList.make()
+                )
+            )
+        );
+        console.log('Test append()');
+        console.log(testList.toArray(numbers1));
+        console.assert(JSON.stringify(testList.toArray(numbers1)) === JSON.stringify([1, 2, 3]));
+        const numbers2 = testList.append(4, numbers1);
+        console.log(testList.toArray(numbers2));
+        console.assert(JSON.stringify(testList.toArray(numbers2)) === JSON.stringify([1, 2, 3, 4]));
+        const numbers3 = testList.fromArray([1, 2, 3, 4]);
+        console.log(testList.toArray(numbers3));
+        console.assert(JSON.stringify(testList.toArray(numbers2)) === JSON.stringify(testList.toArray(numbers3)));
+
+
+    }
+
 
     const ll1 = listDecorator(lambdaList1());
     listTest(ll1);
@@ -561,5 +601,9 @@
     arrayTest(arr1);
     const arr2 = arrayDecorator(church2);
     arrayTest(arr2);
+    const ec1 = extraCredit(arr1);
+    extraCreditTest(ec1);
+    const ec2 = extraCredit(arr2);
+    extraCreditTest(ec2);
   </script>
 </html>
