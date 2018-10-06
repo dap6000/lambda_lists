@@ -24,7 +24,7 @@
         const empty_list = Symbol('empty_list');
         return {
             make: () => empty_list,
-            prepend: (element, list) => 
+            prepend: (element, list) =>
                 (cmd) => 
                     (cmd === 'head')
                         ? element
@@ -82,14 +82,14 @@
         const and = (a, b) => (a) ? (b) ? true : false : false;
         const or = (a, b) => (a) ? true : (b) ? true : false;
         const xor = (a, b) => and(or(a, b), not(and(a, b)));
-        L.map = (func, list) => 
+        L.map = (func, list) =>
             L.is_empty(list)
                 ? list
                 : L.prepend(
                     func(L.head(list)),
                     L.map(func, L.tail(list))
                 );
-        L.filter = (func, list) => 
+        L.filter = (func, list) =>
             L.is_empty(list)
                 ? list
                 : func(L.head(list))
@@ -154,7 +154,7 @@
         L.div = (a, b) => L.lt(a, b) ? zero : L.inc(L.div(L.sub(a, b), b));
         L.rem = (a, b) => L.lt(a, b) ? a : L.rem(L.sub(a, b), b);
         L.toInt = (list) => L.is_zero(list) ? 0 : 1 + L.toInt(L.tail(list));
-        L.fromInt = (n) => 
+        L.fromInt = (n) =>
             (parseInt(n, 10) <= 0 || Number.isNaN(n))
                 ? zero
                 : L.prepend(zero, L.fromInt(n - 1));
@@ -176,7 +176,7 @@
             L.is_zero(n)
                 ? L.head(list)
                 : L.nth(L.tail(list), L.dec(n));
-        L.drop = (list, n)  =>
+        L.drop = (list, n) =>
             L.is_zero(n)
                 ? list
                 : L.drop(L.tail(list), L.dec(n));
@@ -203,10 +203,43 @@
                 : L.prepend(L.head(list), L.append(element, L.tail(list)));
         /*
          * `concat` to concatenate two lists.
+         */
+        L.concat = (a, b) => 
+            L.is_empty(b)
+                ? a
+                : L.concat(L.append(L.head(b), a), L.tail(b))
+        /*
          * `min` and `max` which take two numbers and return the minimum/maximum one.
+         */
+        L.min = (a, b) =>
+            L.lt(a, b)
+                ? a
+                : b;
+        L.max = (a, b) =>
+            L.gt(a, b)
+                ? a
+                : b;
+        /*
          * `remove`, which is like filter except it only leaves the elements that return false for the predicate.
+         */
+         L.remove = (func, list) =>
+            L.is_empty(list)
+                ? list
+                : func(L.head(list))
+                    ? L.remove(func, L.tail(list))
+                    : L.prepend(
+                        L.head(list),
+                        L.remove(func, L.tail(list))
+                    );
+        /*
          * `contains_number`, which checks if a specific number is inside a list of numbers.
         */
+        L.contains_number = (num, list) =>
+            L.is_empty(list)
+                ? false
+                : L.is_equal(num, L.head(list))
+                    ? true
+                    : L.contains_number(num, L.tail(list));
         L.toArray = (list) =>
             L.is_empty(list)
                 ? []
@@ -585,7 +618,64 @@
         console.log(testList.toArray(numbers3));
         console.assert(JSON.stringify(testList.toArray(numbers2)) === JSON.stringify(testList.toArray(numbers3)));
 
+        console.log("Test concat()");
+        const numbers4 = testList.concat(numbers2, numbers1);
+        console.log(testList.toArray(numbers4));
+        console.assert(JSON.stringify(testList.toArray(numbers4)) === JSON.stringify([1, 2, 3, 4, 1, 2, 3]));
+        const numbers5 = testList.concat(numbers1, numbers2);
+        console.log(testList.toArray(numbers5));
+        console.assert(JSON.stringify(testList.toArray(numbers5)) === JSON.stringify([1, 2, 3, 1, 2, 3, 4]));
 
+        console.log("Test min()");
+        const minlist = testList.min(numbers1, numbers2);
+        console.log(testList.toArray(minlist));
+        console.assert(testList.is_equal(minlist, numbers1));
+        const minlist2 = testList.min(numbers2, numbers1);
+        console.log(testList.toArray(minlist2));
+        console.assert(testList.is_equal(minlist2, numbers1));
+
+        console.log("Test max()");
+        const maxlist = testList.max(numbers1, numbers2);
+        console.log(testList.toArray(maxlist));
+        console.assert(testList.is_equal(maxlist, numbers2));
+        const maxlist2 = testList.max(numbers2, numbers1);
+        console.log(testList.toArray(maxlist2));
+        console.assert(testList.is_equal(maxlist2, numbers2));
+
+        console.log("Test remove()");
+        const removed = testList.remove(is_odd, numbers2);
+        console.log(testList.toArray(removed));
+        console.assert(JSON.stringify(testList.toArray(removed)) === JSON.stringify([2, 4]))
+
+        console.log("Test contains_number()");
+        const zero = testList.make();
+        const one = testList.inc(zero);
+        const two = testList.inc(one);
+        const three = testList.inc(two);
+        const four = testList.inc(three);
+        const five = testList.inc(four);
+        const six = testList.inc(five);
+        const seven = testList.inc(six);
+        const eight = testList.inc(seven);
+        const nine = testList.inc(eight);
+        const ten = testList.inc(nine);
+        const listOfNumbers = testList.prepend(
+            ten,
+            testList.prepend(
+                nine,
+                testList.prepend(
+                    eight,
+                    testList.prepend(
+                        seven,
+                        zero
+                    )
+                )
+            )
+        );
+        console.log({list_contains_nine: testList.contains_number(nine, listOfNumbers)});
+        console.assert(testList.contains_number(nine, listOfNumbers) === true);
+        console.log({list_contains_five: testList.contains_number(five, listOfNumbers)});
+        console.assert(testList.contains_number(five, listOfNumbers) === false);
     }
 
 
